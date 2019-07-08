@@ -222,23 +222,69 @@ def statistic_from_tx(tx_record):
     # count_list[0]---input count
     return input_num, output_num, input_addrs, output_addrs, tx_id
 
-def analyze_involved_txs(addr,txs_record,txs):
+def analyze_involved_txs(addr,txs_record,txs,flag):
     addr_cluster = []
     addr_cluster.append(addr)
-    for tx_record in txs_record:
-        print("************************************************************")
-        inputNum, outputNum, inputAddrs, outputAddrs, tx_id = statistic_from_tx(tx_record)
-        cluster_list=clustering_from_three_types(inputNum, outputNum, inputAddrs, outputAddrs, tx_id,txs)
-        addr_cluster.extend(cluster_list)
-        print("************************************************************")
-    addr_cluster = remove_duplicate_elements_from_list(addr_cluster)
+    if flag == INPUT:
+        for tx_record in txs_record:
+            print("************************************************************")
+            print("This addr act as an input address!")
+            inputNum, outputNum, inputAddrs, outputAddrs, tx_id = statistic_from_tx(tx_record)
+            cluster_list=clustering_from_input_addrs(addr,inputNum, outputNum, inputAddrs, outputAddrs, tx_id,txs)
+            addr_cluster.extend(cluster_list)
+            print("************************************************************")
+        addr_cluster = remove_duplicate_elements_from_list(addr_cluster)
+    elif flag == OUTPUT:
+        for tx_record in txs_record:
+            print("************************************************************")
+            print("This addr act as an output address!")
+            inputNum, outputNum, inputAddrs, outputAddrs, tx_id = statistic_from_tx(tx_record)
+            cluster_list=clustering_from_output_addrs(addr,inputNum, outputNum, inputAddrs, outputAddrs, tx_id,txs)
+            addr_cluster.extend(cluster_list)
+            print("************************************************************")
+        addr_cluster = remove_duplicate_elements_from_list(addr_cluster)
     return addr_cluster
 
-def get_a_cluster_from_an_address(addr,txs):
-    total_txs = identify_involved_txs(addr, txs)
-    cl = analyze_involved_txs(addr,total_txs, txs)
-    print("result:{0}\n".format(cl))
 
+def clustering_from_input_addrs(addr, inputNum, outputNum, inputAddrs, outputAddrs, tx_id, txs):
+    cluster_list = []
+    flagOTC, change_addr = is_one_time_chance(inputNum, outputNum, inputAddrs, outputAddrs, tx_id, txs)
+    flagCS = is_comman_spending(inputNum, outputNum)
+    flagCB = is_coinbase(inputNum, outputNum)
+    # OTC--all input addresses and the change address belong to same entity
+    if flagOTC:
+        cluster_list.extend(inputAddrs)
+        cluster_list.append(change_addr)
+    # CS--all input addresses belong to same entity
+    if flagCS:
+        cluster_list.extend(inputAddrs)
+    # CB--all output addresses belong to same entity
+    if flagCB:
+        pass
+    # print(cluster_list)
+    return cluster_list
+
+
+def clustering_from_output_addrs(addr, inputNum, outputNum, inputAddrs, outputAddrs, tx_id, txs):
+    cluster_list = []
+    flagOTC, change_addr = is_one_time_chance(inputNum, outputNum, inputAddrs, outputAddrs, tx_id, txs)
+    flagCS = is_comman_spending(inputNum, outputNum)
+    flagCB = is_coinbase(inputNum, outputNum)
+    # OTC--all input addresses and the change address belong to same entity
+    if flagOTC and change_addr == addr:
+        cluster_list.extend(inputAddrs)
+        cluster_list.append(change_addr)
+
+    return cluster_list
+
+
+def get_a_cluster_from_an_address(addr, txs):
+    input_txs, output_txs = identify_addr(addr, txs)
+
+    cl1 = analyze_involved_txs(addr, input_txs, txs, INPUT)
+    cl2 = analyze_involved_txs(addr, output_txs, txs, OUTPUT)
+    cl=remove_duplicate_elements_from_list(cl1+cl2)
+    print("result:{0}".format(cl))
     return cl
 
 def remove_duplicate_elements_from_list(dlist):
@@ -299,10 +345,10 @@ def main():
 
     # method 1
     addrs, txs = preprocessing()
-    addr = "1Ag4AkSsia9o9b2pBVziii8o9dfZvAsXc9"
-    addr_list = [addr]
-    result = re_cluster(addr_list,addr_list, txs)
-    println("Clustering Result",result)
+
+    addr = "1NTHw2tDXLKbWdQirKUwz8eHyf7iVZF518"
+    recur_cluster(addr, txs)
+
     wallet_real_cluster(addr)
 
     # # method 2
