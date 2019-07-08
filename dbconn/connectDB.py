@@ -7,7 +7,7 @@ class SQL:
     #dbc = ("localhost","root","","sim")
 
     def __init__(self):
-        self.db = pymysql.connect( host='localhost',port=3316,user='root',passwd='',db='simdb')
+        self.db = pymysql.connect( host='localhost',port=3306,user='root',passwd='',db='sim')
         self.cursor = self.db.cursor()
 
     def query(self, sql, arg):

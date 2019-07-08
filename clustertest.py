@@ -299,10 +299,10 @@ def main():
 
     # method 1
     addrs, txs = preprocessing()
-    addr = ["1Ag4AkSsia9o9b2pBVziii8o9dfZvAsXc9"]
-    result = re_cluster(addr,addr, txs)
-    println("Clustering Result",result)
     addr = "1Ag4AkSsia9o9b2pBVziii8o9dfZvAsXc9"
+    addr_list = [addr]
+    result = re_cluster(addr_list,addr_list, txs)
+    println("Clustering Result",result)
     wallet_real_cluster(addr)
 
     # # method 2
