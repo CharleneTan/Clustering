@@ -4,7 +4,7 @@ import logging
 import coloredlogs
 import time
 logging.basicConfig(filename='example.log',
-                    filemode='w',
+                    filemode='a',
                     format = '%(asctime)s - %(message)s')
 
 

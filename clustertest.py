@@ -1,6 +1,7 @@
 from dbconn import connectDB
 import json
 from prettytable import PrettyTable
+from dbconn.logger import logger
 
 INPUT = 0
 OUTPUT = 1
@@ -348,19 +349,47 @@ def statistic_from_raw_txs(txs):
     print("Total num of commen spending tx is {0}".format(len(cs_list)))
     return len(cs_list)
 
+
+def evaluate_cluster_result(heuristicCluster,realCluster):
+    perc = round(len(heuristicCluster) / len(realCluster), 2) * 100
+    # print("{0}% addresses have been clustered".format(perc))
+    logger.info("{0}% addresses have been clustered".format(perc))
+    if set(heuristicCluster).issubset(set(realCluster)):
+        # print("\033[1;32m 100% accurate clustering \033[0m!")
+        logger.info('100% accurate clustering!')
+    else:
+        inter = [i for i in heuristicCluster if i in realCluster]
+        wrongCluster = remove_duplicates(heuristicCluster,inter)
+        wcl = len(wrongCluster)
+        hcl = len(heuristicCluster)
+        # accurate = 1- round(len(wrongCluster)/len(heuristicCluster),2)
+        accurate = round(1-wcl / hcl, 2)*100
+        # print("\033[1;31m {0}% accurate clustering \033[0m!".format(accurate))
+        logger.info("{0}% accurate clustering!".format(accurate))
+
+def recursive_evaluate_result():
+    addrs, txs = preprocessing()
+    for i in range(30):
+        final_cluster = re_cluster([addrs[i]], [addrs[i]], txs)
+        println("Clustering Result", final_cluster)
+        realCluster = wallet_real_cluster(addrs[i])
+        evaluate_cluster_result(final_cluster, realCluster)
+
+
 def main():
 
-    # method 1
-    addrs, txs = preprocessing()
-
-    addr = "12qnFUMWGUiGCNy3dhw57NHQyPyW78gmg8"
-    recur_cluster(addr, txs)
-
-    wallet_real_cluster(addr)
-
+    # # method 1
+    # addrs, txs = preprocessing()
+    # # 1MJGWGMy3oHDVEK9G8evRXxdBLVoGZR6E4
+    # addr = "19AvkT9VpQMPdYgFiQpuij9Kj2Nk7eEsbj"
+    # final_cluster = re_cluster([addr], [addr], txs)
+    # println("Clustering Result", final_cluster)
+    # realCluster = wallet_real_cluster(addr)
+    # evaluate_cluster_result(final_cluster, realCluster)
+    recursive_evaluate_result()
     # # method 2
     # addrs, txs = preprocessing()
-    # addr = "1NdufxUjo63f9dQ2ov9bCpNsXd23wbgaD6"
+    # addr = "1MJGWGMy3oHDVEK9G8evRXxdBLVoGZR6E4"
     # recur_cluster(addr, txs)
     # wallet_real_cluster(addr)
 
